@@ -5,6 +5,7 @@ from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn.pipeline import make_pipeline
 from scipy.optimize import curve_fit
+from sklearn.metrics import mean_squared_error
 import pandas as pd
 import tkinter as tk
 from tkinter import ttk, filedialog
@@ -14,13 +15,17 @@ def linear_regression(x, y):
     model = LinearRegression()
     model.fit(x, y)
     y_pred = model.predict(x)
-    return y_pred, model.coef_, model.intercept_
+    rmse = np.sqrt(mean_squared_error(y, y_pred))
+    nrmse = rmse / np.mean(y)
+    return y_pred, model.coef_, model.intercept_, nrmse
 
 def polynomial_regression(x, y, degree):
     model = make_pipeline(PolynomialFeatures(degree), LinearRegression())
     model.fit(x, y)
     y_pred = model.predict(x)
-    return y_pred, model
+    rmse = np.sqrt(mean_squared_error(y, y_pred))
+    nrmse = rmse / np.mean(y)
+    return y_pred, model, nrmse
 
 def logistic_growth(x, K, r, x0):
     return K / (1 + np.exp(-r * (x - x0)))
@@ -29,7 +34,9 @@ def nonlinear_regression(x, y):
     initial_guesses = [max(y), 1, np.median(x)]
     popt, _ = curve_fit(logistic_growth, x.flatten(), y, p0=initial_guesses, maxfev=5000)
     y_pred = logistic_growth(x, *popt)
-    return y_pred, popt
+    rmse = np.sqrt(mean_squared_error(y, y_pred))
+    nrmse = rmse / np.mean(y)
+    return y_pred, popt, nrmse
 
 # GUI application
 class Application(tk.Tk):
@@ -133,27 +140,27 @@ class Application(tk.Tk):
 
             # Linear Regression
             if self.check_var_lin.get():
-                y_pred_lin, coef_lin, intercept_lin = linear_regression(x, y)
-                equation_lin = f'$y = {coef_lin[0]:.2f}x + {intercept_lin:.2f}$'
-                self.ax.plot(x, y_pred_lin, label=f'Dim {i} Linear: {equation_lin}', linestyle='--', color=plt.cm.tab10(i - 1))
+                y_pred_lin, coef_lin, intercept_lin, nrmse_lin = linear_regression(x, y)
+                equation_lin = f'$y = {coef_lin[0]:.2f}x + {intercept_lin:.2f}, NRMSE = {nrmse_lin:.2f}$'
+                self.ax.plot(x, y_pred_lin, label=f'Linear: {equation_lin}', linestyle='--', color=plt.cm.tab10(i - 1))
 
             # Polynomial Regression
             if self.check_var_poly.get():
                 degree = 3
-                y_pred_poly, model_poly = polynomial_regression(x, y, degree)
+                y_pred_poly, model_poly, nrmse_poly = polynomial_regression(x, y, degree)
                 coefs_poly = model_poly.named_steps['linearregression'].coef_.ravel()
                 intercept_poly = model_poly.named_steps['linearregression'].intercept_
                 equation_poly = f'$y = {intercept_poly:.2f} '
                 for d in range(1, degree + 1):
                     equation_poly += f'+ {coefs_poly[d]:.2f}x^{d} '
-                equation_poly = equation_poly.strip() + '$'
-                self.ax.plot(x, y_pred_poly, label=f'Dim {i} Poly: {equation_poly}', linestyle='--', color=plt.cm.tab10(i - 1))
+                equation_poly += f', NRMSE = {nrmse_poly:.2f}$'
+                self.ax.plot(x, y_pred_poly, label=f'Poly: {equation_poly}', linestyle='--', color=plt.cm.tab10(i - 1))
 
             # Non-linear Regression
             if self.check_var_nonlin.get():
-                y_pred_nonlin, popt_nonlin = nonlinear_regression(x, y)
-                equation_nonlin = f'$K = {popt_nonlin[0]:.2f}, r = {popt_nonlin[1]:.2f}, x0 = {popt_nonlin[2]:.2f}$'
-                self.ax.plot(x, y_pred_nonlin, label=f'Dim {i} Non-lin: {equation_nonlin}', linestyle='--', color=plt.cm.tab10(i - 1))
+                y_pred_nonlin, popt_nonlin, nrmse_nonlin = nonlinear_regression(x, y)
+                equation_nonlin = f'$K = {popt_nonlin[0]:.2f}, r = {popt_nonlin[1]:.2f}, x0 = {popt_nonlin[2]:.2f}, NRMSE = {nrmse_nonlin:.2f}$'
+                self.ax.plot(x, y_pred_nonlin, label=f'Non-lin: {equation_nonlin}', linestyle='--', color=plt.cm.tab10(i - 1))
 
         self.ax.set_xlabel('Steps')
         self.ax.set_ylabel('Value')
