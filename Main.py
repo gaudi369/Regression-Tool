@@ -62,14 +62,14 @@ class Application(tk.Tk):
         self.entry_range = tk.Entry(self)
         self.entry_range.pack(pady=5)
 
-        self.label_dimensions = tk.Label(self, text="Dimensions to plot (e.g., 1,2,3):")
+        self.label_dimensions = tk.Label(self, text="Dimensions to plot (e.g., 1, 2, 3):")
         self.label_dimensions.pack(pady=5)
         self.entry_dimensions = tk.Entry(self)
         self.entry_dimensions.pack(pady=5)
 
-        self.check_var_lin = tk.BooleanVar(value=True)
+        self.check_var_lin = tk.BooleanVar(value=False)
         self.check_var_poly = tk.BooleanVar(value=True)
-        self.check_var_nonlin = tk.BooleanVar(value=True)
+        self.check_var_nonlin = tk.BooleanVar(value=False)
 
         self.check_lin = tk.Checkbutton(self, text="Linear Regression", variable=self.check_var_lin, command=self.plot_data)
         self.check_poly = tk.Checkbutton(self, text="Polynomial Regression", variable=self.check_var_poly, command=self.plot_data)
